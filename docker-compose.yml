@@ -1,0 +1,38 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:14.4-alpine
+    container_name: ${APP_NAME}_db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - db:/var/lib/postgresql/data
+    ports:
+      - 5433:${DB_PORT}
+  app:
+    container_name: ${APP_NAME}_app
+    build:
+      context: .
+      args:
+        NODE_PORT: ${PORT}
+      target: development
+    env_file:
+      - .env
+    volumes:
+      - ./:/home/node/app
+      - /home/node/app/node_modules
+    command: ['npm', 'run', 'start:debug']
+    ports:
+      - ${PORT}:${PORT}
+      - 9229:9229
+    depends_on:
+      - db
+  redis:
+    image: redis:latest
+    command: redis-server
+
+volumes:
+  db:
+    driver: local
